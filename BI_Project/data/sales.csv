@@ -1,0 +1,8 @@
+OrderID,Category,Region,Sales
+ORD-001,Technology,West,500.50
+ORD-002,Furniture,East,200.00
+ORD-003,Office Supplies,West,50.25
+ORD-004,Technology,East,800.00
+ORD-005,Furniture,West,150.00
+ORD-006,Office Supplies,East,75.00
+ORD-007,Technology,West,1200.00

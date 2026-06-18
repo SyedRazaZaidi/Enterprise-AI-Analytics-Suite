@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Intelligence Suite</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f1f5f9; 
+            color: #1e293b; 
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px; background-color: #0f172a; color: white; display: flex;
+            flex-direction: column; padding-top: 30px; box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar h2 {
+            text-align: center; margin-bottom: 40px; font-size: 20px; color: #38bdf8; letter-spacing: 1px;
+        }
+        .nav-btn {
+            background: none; border: none; color: #cbd5e1; padding: 18px 25px; text-align: left;
+            font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        .nav-btn:hover { background-color: #1e293b; color: white; }
+        .nav-btn.active { background-color: #1e293b; color: #38bdf8; border-left: 4px solid #38bdf8; }
+
+        .main-content { flex: 1; padding: 40px 50px; overflow-y: auto; }
+        .page-section { display: none; }
+        .page-section.active { display: block; animation: fadeIn 0.4s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { font-size: 36px; margin-top: 0; margin-bottom: 10px; }
+        p.subtitle { color: #64748b; font-size: 16px; margin-bottom: 40px; }
+        
+        .live-indicator {
+            display: inline-block; width: 10px; height: 10px; background-color: #22c55e;
+            border-radius: 50%; margin-right: 8px; animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        #dashboard-container { display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 50px; min-height: 120px; }
+        
+        .card { 
+            background: white; padding: 30px; border-radius: 16px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); width: 220px;
+            border-top: 5px solid #0ea5e9; text-align: center;
+        }
+        .region-title { font-weight: 700; font-size: 18px; color: #475569; text-transform: uppercase; }
+        .revenue-number { color: #0ea5e9; font-size: 32px; font-weight: bold; margin: 15px 0 0 0; }
+
+        .ai-card {
+            background: white; padding: 40px; border-radius: 16px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+            border-top: 5px solid #8b5cf6; margin-bottom: 30px;
+        }
+
+        .chart-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 40px;
+        }
+        .chart-container {
+            background: white; padding: 20px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .chart-title { text-align: center; font-weight: bold; color: #475569; margin-bottom: 15px; }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; 
+            font-size: 16px; margin-top: 5px; box-sizing: border-box;
+        }
+        input[type="text"] { margin-top: 0; margin-bottom: 15px; padding: 15px; }
+        input:focus, select:focus { border-color: #0ea5e9; outline: none; }
+        
+        button.action-btn {
+            padding: 12px 24px; background-color: #0ea5e9; color: white; border: none; 
+            border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;
+        }
+        button.action-btn:hover { background-color: #0284c7; }
+        
+        #ai-output, #ml-output {
+            margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; 
+            border: 1px solid #e2e8f0; display: none; line-height: 1.6;
+        }
+
+        .metric-box {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; 
+            padding: 20px; text-align: center; flex: 1;
+        }
+        .metric-value { font-size: 28px; font-weight: bold; color: #10b981; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>BI SUITE</h2>
+        <button class="nav-btn active" onclick="switchTab('page-live', this)">Live Analytics</button>
+        <button class="nav-btn" onclick="switchTab('page-ml', this)">Sales & Demand ML</button>
+        <button class="nav-btn" onclick="switchTab('page-diagnostics', this)">Model Diagnostics</button>
+        <button class="nav-btn" onclick="switchTab('page-reports', this)">Executive Reports</button>
+    </div>
+
+    <div class="main-content">
+
+        <div id="page-live" class="page-section active">
+            <h1>Real-Time Operations</h1>
+            <p class="subtitle"><span class="live-indicator"></span> Kafka & PySpark Streams Connected</p>
+            
+            <div id="dashboard-container">
+                <h3 style="color: #64748b;">Awaiting data stream...</h3>
+            </div>
+
+            <div class="ai-card">
+                <h3 style="margin-top: 0;">Cognitive AI Assistant</h3>
+                <p style="color: #64748b; margin-bottom: 20px;">Query historical vector data for context.</p>
+                <input type="text" id="user-query" placeholder="E.g., Why did furniture sales drop in the West region?">
+                <button class="action-btn" onclick="submitQuery()">Analyze Data</button>
+                <div id="ai-output"></div>
+            </div>
+        </div>
+
+        <div id="page-ml" class="page-section">
+            <h1>Predictive Intelligence & Analytics</h1>
+            <p class="subtitle">Historical Trends, Forecasting, and Segmentation</p>
+
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Revenue Market Share</div>
+                    <canvas id="regionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Sales by Category</div>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Avg Discount Strategy by Region</div>
+                    <canvas id="discountChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container" style="margin-bottom: 30px;">
+                <div class="chart-title">AI Time-Series Revenue Forecast (Next 6 Months)</div>
+                <canvas id="forecastChart" style="max-height: 350px;"></canvas>
+            </div>
+
+            <div class="chart-container" style="margin-bottom: 30px;">
+                <div class="chart-title">AI Customer Segmentation (K-Means Clustering)</div>
+                <p style="text-align: center; color: #64748b; font-size: 14px; margin-top: -10px; margin-bottom: 20px;">
+                    X = Recency (Days), Y = Spend ($), Bubble Size = Frequency
+                </p>
+                <canvas id="clusterChart" style="max-height: 400px;"></canvas>
+            </div>
+
+            <div class="ai-card" style="border-top-color: #10b981;">
+                <h3 style="margin-top: 0;">Next-Quarter Revenue Forecaster (Random Forest)</h3>
+                <p style="color: #64748b; margin-bottom: 25px;">Input your planned metrics to predict future regional revenue.</p>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 14px; font-weight: bold; color: #475569;">Item Quantity</label>
+                        <input type="number" id="ml-quantity" placeholder="e.g., 5">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 14px; font-weight: bold; color: #475569;">Discount Rate (0.0 - 0.8)</label>
+                        <input type="number" step="0.01" id="ml-discount" placeholder="e.g., 0.15">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 14px; font-weight: bold; color: #475569;">Region</label>
+                        <select id="ml-region">
+                            <option value="0">East</option>
+                            <option value="1">West</option>
+                            <option value="2">Central</option>
+                            <option value="3">South</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button class="action-btn" style="background-color: #10b981;" onclick="runPrediction()">Run Forecast</button>
+                <div id="ml-output" style="font-size: 24px; font-weight: bold; color: #10b981;"></div>
+            </div>
+        </div>
+
+        <div id="page-diagnostics" class="page-section">
+            <h1>Model Diagnostics & Explainable AI</h1>
+            <p class="subtitle">Statistical proofs and mathematical feature importance.</p>
+
+            <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+                <div class="metric-box">
+                    <div style="color: #64748b; font-weight: bold;">Random Forest R² Score</div>
+                    <div class="metric-value" id="r2-score">Loading...</div>
+                </div>
+                <div class="metric-box">
+                    <div style="color: #64748b; font-weight: bold;">Mean Absolute Error (MAE)</div>
+                    <div class="metric-value" id="mae-score">Loading...</div>
+                </div>
+                <div class="metric-box">
+                    <div style="color: #64748b; font-weight: bold;">Root Mean Squared Error</div>
+                    <div class="metric-value" id="rmse-score">Loading...</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Feature Importance (Explainable AI)</div>
+                <p style="text-align: center; color: #64748b; font-size: 14px; margin-top: -10px; margin-bottom: 20px;">
+                    How heavily each input impacts the Random Forest's final revenue prediction.
+                </p>
+                <canvas id="xaiChart" style="max-height: 350px;"></canvas>
+            </div>
+        </div>
+
+        <div id="page-reports" class="page-section">
+            <h1>Automated Reporting</h1>
+            <p class="subtitle">Generate executive summaries dynamically.</p>
+            
+            <div class="ai-card" style="border-top-color: #f59e0b;">
+                <h3 style="margin-top: 0;">Export System Snapshot</h3>
+                <p style="color: #64748b; margin-bottom: 20px;">Compile live stream data, ML predictions, and AI reasoning into a PDF.</p>
+                <button class="action-btn" style="background-color: #f59e0b;" onclick="downloadReport()">Generate PDF Report</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.page-section').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        async function fetchLiveMetrics() {
+            try {
+                const response = await fetch('/api/revenue');
+                const result = await response.json();
+                const container = document.getElementById('dashboard-container');
+
+                if (result.status === 'success') {
+                    if (!result.data || result.data.length === 0) {
+                        container.innerHTML = '<h3 style="color: #ef4444;">No live data detected. Please start spark_engine.py.</h3>';
+                        return;
+                    }
+                    let htmlContent = '';
+                    result.data.forEach(item => {
+                        htmlContent += `
+                            <div class="card">
+                                <div class="region-title">${item.Region}</div>
+                                <div class="revenue-number">$${item.Total_Revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = htmlContent;
+                }
+            } catch (error) { console.error("Error fetching live data:", error); }
+        }
+
+        async function submitQuery() {
+            const queryInput = document.getElementById('user-query').value;
+            const outputBox = document.getElementById('ai-output');
+            if (queryInput.trim() === "") {
+                outputBox.style.display = "block";
+                outputBox.innerHTML = "<span style='color: #ef4444;'>Please enter a question first.</span>";
+                return;
+            }
+            outputBox.style.display = "block";
+            outputBox.innerHTML = "<span style='color: #0ea5e9;'><strong><em>Scanning vector database...</em></strong></span>";
+            try {
+                const response = await fetch(`/api/ask?query=${encodeURIComponent(queryInput)}`);
+                const data = await response.json();
+                if (data.status === "success") {
+                    outputBox.innerHTML = `<strong style="color: #8b5cf6;">AI Insight:</strong> ${data.ai_response}`;
+                } else {
+                    outputBox.innerHTML = `<span style='color: #ef4444;'>Server Error: ${data.message}</span>`;
+                }
+            } catch (error) { outputBox.innerHTML = "<span style='color: #ef4444;'>Connection error.</span>"; }
+        }
+
+        async function runPrediction() {
+            const quantity = document.getElementById('ml-quantity').value;
+            const discount = document.getElementById('ml-discount').value;
+            const region = document.getElementById('ml-region').value;
+            const outputBox = document.getElementById('ml-output');
+            if (!quantity || !discount) {
+                alert("Please enter both quantity and discount values."); return;
+            }
+            try {
+                const response = await fetch(`/api/predict?quantity=${quantity}&discount=${discount}&region=${region}`);
+                const data = await response.json();
+                outputBox.style.display = "block";
+                if (data.status === "success") {
+                    outputBox.innerHTML = `Predicted Revenue: $${data.predicted_revenue.toLocaleString()}`;
+                } else {
+                    outputBox.innerHTML = `<span style="color: #ef4444; font-size: 16px;">Error: ${data.message}</span>`;
+                }
+            } catch (error) { outputBox.innerHTML = `<span style="color: #ef4444; font-size: 16px;">Connection failed.</span>`; }
+        }
+
+        function downloadReport() { window.open('/api/report', '_blank'); }
+
+        async function loadCharts() {
+            try {
+                const response = await fetch('/api/charts');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    new Chart(document.getElementById('regionChart'), { type: 'doughnut', data: { labels: Object.keys(data.region_sales), datasets: [{ data: Object.values(data.region_sales), backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6'] }] } });
+                    new Chart(document.getElementById('categoryChart'), { type: 'bar', data: { labels: Object.keys(data.category_sales), datasets: [{ label: 'Total Sales ($)', data: Object.values(data.category_sales), backgroundColor: '#8b5cf6', borderRadius: 6 }] } });
+                    new Chart(document.getElementById('discountChart'), { type: 'line', data: { labels: Object.keys(data.region_discount), datasets: [{ label: 'Average Discount (%)', data: Object.values(data.region_discount), borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.4 }] } });
+                }
+            } catch (error) { console.error("Failed to load charts:", error); }
+
+            try {
+                const forecastResponse = await fetch('/api/forecast');
+                const forecastData = await forecastResponse.json();
+                if (forecastData.status === 'success') {
+                    new Chart(document.getElementById('forecastChart'), {
+                        type: 'line',
+                        data: {
+                            labels: forecastData.labels,
+                            datasets: [
+                                { label: 'Historical Revenue', data: forecastData.historical, borderColor: '#0ea5e9', backgroundColor: '#0ea5e9', tension: 0.3, pointRadius: 2 },
+                                { label: 'AI Forecast (Next 6 Months)', data: forecastData.forecast, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.2)', borderDash: [5, 5], fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#f59e0b' }
+                            ]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' } }
+                    });
+                }
+            } catch (error) { console.error("Failed to load forecast data:", error); }
+
+            try {
+                const clusterResponse = await fetch('/api/segmentation');
+                const clusterResult = await clusterResponse.json();
+                if (clusterResult.status === 'success') {
+                    new Chart(document.getElementById('clusterChart'), {
+                        type: 'bubble',
+                        data: {
+                            datasets: [
+                                { label: 'Cluster 0 (Potential Loyalist)', data: clusterResult.clusters[0], backgroundColor: 'rgba(16, 185, 129, 0.6)', borderColor: '#10b981' },
+                                { label: 'Cluster 1 (High-Value / VIP)', data: clusterResult.clusters[1], backgroundColor: 'rgba(139, 92, 246, 0.6)', borderColor: '#8b5cf6' },
+                                { label: 'Cluster 2 (At-Risk / Churning)', data: clusterResult.clusters[2], backgroundColor: 'rgba(239, 68, 68, 0.6)', borderColor: '#ef4444' }
+                            ]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            scales: { x: { title: { display: true, text: 'Recency (Days Since Last Order)' } }, y: { title: { display: true, text: 'Monetary Value (Total Spend $)' } } },
+                            plugins: { tooltip: { callbacks: { label: function(context) { const point = context.raw; return `${point.name}: $${point.y} spent, ${point.x} days ago.`; } } } }
+                        }
+                    });
+                }
+            } catch (error) { console.error("Failed to load cluster data:", error); }
+        }
+
+        async function loadDiagnostics() {
+            try {
+                const response = await fetch('/api/diagnostics');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('r2-score').innerText = data.metrics.r2;
+                    document.getElementById('mae-score').innerText = "$" + data.metrics.mae;
+                    document.getElementById('rmse-score').innerText = "$" + data.metrics.rmse;
+
+                    new Chart(document.getElementById('xaiChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(data.feature_importance),
+                            datasets: [{
+                                label: 'Impact Percentage (%)',
+                                data: Object.values(data.feature_importance),
+                                backgroundColor: ['#ef4444', '#8b5cf6', '#0ea5e9'],
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y', // Makes the bar chart horizontal
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                }
+            } catch (error) { console.error("Failed to load diagnostics:", error); }
+        }
+
+        // --- INITIALIZE EVERYTHING ---
+        fetchLiveMetrics();
+        setInterval(fetchLiveMetrics, 1000);
+        loadCharts();
+        loadDiagnostics(); // Loads the new XAI metrics
+    </script>
+</body>
+</html>
