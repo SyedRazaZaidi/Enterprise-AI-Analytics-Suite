@@ -34,7 +34,7 @@ A background processing engine that bypasses frontend screen-capturing. It uses 
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/yourusername/Enterprise-AI-Analytics-Suite.git](https://github.com/SyedRazaZaidi/Enterprise-AI-Analytics-Suite.git)
+   git clone [https://github.com/SyedRazaZaidi/Enterprise-AI-Analytics-Suite.git](https://github.com/SyedRazaZaidi/Enterprise-AI-Analytics-Suite.git)
    cd Enterprise-AI-Analytics-Suite
 Install the required dependencies:
 
